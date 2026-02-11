@@ -1,0 +1,340 @@
+@echo off
+setlocal enabledelayedexpansion
+
+:: Create timestamp in MM-HH_DD_MM_YYYY format
+for /f "tokens=1-4 delims=/ " %%a in ('date /t') do (
+    set day=%%a
+    set month=%%b
+    set year=%%c
+)
+for /f "tokens=1-2 delims=: " %%a in ('time /t') do (
+    set hour=%%a
+    set minute=%%b
+)
+set timestamp=%month%-%hour%_%day%_%month%_%year%
+
+:: Log file path
+set logFile=C:\TheTechToolLog.log
+
+:: Main Menu Starts
+
+:MENU
+cls
+echo ================================
+echo         THE TECH TOOL
+echo ================================
+echo(
+echo The Tool for all your IT Technican needs! 
+echo( 
+echo 1. Network Tool Menu
+echo 2. File Remnants Menu
+echo 3. PC Repair Menu
+echo 4. Delete SoftwareDistribution folder contents
+echo 5. Trigger Defender signature update
+echo 6. Reboot into BIOS after 10 seconds
+echo 7. Exit
+echo(
+echo ================================
+set /p choicemain=Choose an option (1-7):
+
+if "%choicemain%"=="1" goto NETWORKMENU
+if "%choicemain%"=="2" goto REMNANTSMENU
+if "%choicemain%"=="3" goto REPAIRMENU
+if "%choicemain%"=="4" goto DELETESWD
+if "%choicemain%"=="5" goto DEFUPDATE
+if "%choicemain%"=="6" goto BIOSBOOT
+if "%choicemain%"=="7" goto Exit
+goto MENU
+
+:: Main Menu Ends
+:: Network Menu Starts
+
+:NETWORKMENU
+cls
+echo ================================
+echo        NETWORK TOOL MENU
+echo ================================
+echo(
+echo Select a tool to run:
+echo 1. Ping an IP address or hostname
+echo 2. Show all networking information (Ethernet and Wi-Fi)
+echo 3. Traceroute to a host
+echo 4. Show active network connections (netstat)
+echo 5. Release and renew IP address
+echo 6. Clear DNS cache
+echo 7. Back to Main Menu
+echo(
+set /p choiceNetwork=Choose an option (1-7):
+
+if "%choiceNetwork%"=="1" goto PING
+if "%choiceNetwork%"=="2" goto NETINFO
+if "%choiceNetwork%"=="3" goto TRACEROUTE
+if "%choiceNetwork%"=="4" goto NETSTAT
+if "%choiceNetwork%"=="5" goto RENEWIP
+if "%choiceNetwork%"=="6" goto CLEARDNS
+if "%choiceNetwork%"=="7" goto MENU
+goto MENU
+
+:: Network Menu Ends
+:: Remnants Menu Starts
+
+:REMNANTSMENU
+cls
+echo ================================
+echo     Software Remnants Removal
+echo ================================
+echo(
+echo Select software to uninstall:
+echo 1. Citrix Workspace
+echo 2. Back to Main Menu
+echo(
+set /p uninstallChoice=Choose an option (1-2):
+
+if "%uninstallChoice%"=="1" goto UNINSTALL_CITRIX
+if "%uninstallChoice%"=="2" goto MENU
+goto MENU
+
+:: Remnants Menu Ends
+:: PC Repair Menu Starts
+
+:REPAIRMENU
+cls
+echo ================================
+echo           PC Repair
+echo ================================
+echo(
+echo Select repair option:
+echo 1. SFC scan
+echo 2. Windows repair
+echo 3. Disk error repair
+echo 4. Back to Main Menu
+echo(
+set /p RepairChoice=Choose an option (1-4):
+
+if "%RepairChoice%"=="1" goto SFCSCAN
+if "%RepairChoice%"=="2" goto WINDOWSREPAIR
+if "%RepairChoice%"=="3" goto DISKERROR
+if "%RepairChoice%"=="4" goto MENU
+goto MENU
+
+:: PC Repair Menu Ends
+
+:: Main Menu Functions Start
+
+:EXIT
+cls
+exit
+
+:: Network Functions Start
+
+:PING
+cls
+set /p target=Enter IP address or hostname to ping:
+set /p save=Do you want to save the output to a file? (Y/N or Yes/No):
+if /I "%save%"=="Y" goto PING_SAVE
+if /I "%save%"=="YES" goto PING_SAVE
+
+ping %target%
+pause
+goto MENU
+
+:PING_SAVE
+set /p filepath=Enter folder path to save the file (e.g. C:\Logs):
+set filename=ping_%timestamp%.txt
+ping %target% > "%filepath%\%filename%" 2>>"%logFile%"
+if errorlevel 1 (
+    echo [ERROR] Ping failed for %target% at %timestamp% >> "%logFile%"
+) else (
+    echo Output saved to %filepath%\%filename%
+)
+pause
+goto MENU
+
+:NETINFO
+cls
+set /p save=Do you want to save the output to a file? (Y/N or Yes/No):
+if /I "%save%"=="Y" goto NETINFO_SAVE
+if /I "%save%"=="YES" goto NETINFO_SAVE
+
+echo Ethernet Adapter Info:
+ipconfig /all | findstr /C:"Ethernet adapter" /C:"IPv4 Address" /C:"Subnet Mask" /C:"Default Gateway" /C:"Physical Address"
+echo.
+echo Wi-Fi Adapter Info:
+ipconfig /all | findstr /C:"Wireless LAN adapter" /C:"IPv4 Address" /C:"Subnet Mask" /C:"Default Gateway" /C:"Physical Address"
+pause
+goto MENU
+
+:NETINFO_SAVE
+set /p filepath=Enter folder path to save the file (e.g. C:\Logs):
+set filename=netinfo_%timestamp%.txt
+(
+    echo Ethernet Adapter Info:
+    ipconfig /all | findstr /C:"Ethernet adapter" /C:"IPv4 Address" /C:"Subnet Mask" /C:"Default Gateway" /C:"Physical Address"
+    echo.
+    echo Wi-Fi Adapter Info:
+    ipconfig /all | findstr /C:"Wireless LAN adapter" /C:"IPv4 Address" /C:"Subnet Mask" /C:"Default Gateway" /C:"Physical Address"
+) > "%filepath%\%filename%" 2>>"%logFile%"
+if errorlevel 1 (
+    echo [ERROR] Failed to retrieve network info at %timestamp% >> "%logFile%"
+) else (
+    echo Output saved to %filepath%\%filename%
+)
+pause
+goto MENU
+
+:TRACEROUTE
+cls
+set /p target=Enter IP address or hostname to traceroute:
+set /p save=Do you want to save the output to a file? (Y/N or Yes/No):
+if /I "%save%"=="Y" goto TRACEROUTE_SAVE
+if /I "%save%"=="YES" goto TRACEROUTE_SAVE
+
+tracert %target%
+pause
+goto MENU
+
+:TRACEROUTE_SAVE
+set /p filepath=Enter folder path to save the file (e.g. C:\Logs):
+set filename=traceroute_%timestamp%.txt
+tracert %target% > "%filepath%\%filename%" 2>>"%logFile%"
+if errorlevel 1 (
+    echo [ERROR] Traceroute failed for %target% at %timestamp% >> "%logFile%"
+) else (
+    echo Output saved to %filepath%\%filename%
+)
+pause
+goto MENU
+
+:NETSTAT
+cls
+set /p save=Do you want to save the output to a file? (Y/N or Yes/No):
+if /I "%save%"=="Y" goto NETSTAT_SAVE
+if /I "%save%"=="YES" goto NETSTAT_SAVE
+
+netstat -ano
+pause
+goto MENU
+
+:NETSTAT_SAVE
+set /p filepath=Enter folder path to save the file (e.g. C:\Logs):
+set filename=netstat_%timestamp%.txt
+netstat -ano > "%filepath%\%filename%" 2>>"%logFile%"
+if errorlevel 1 (
+    echo [ERROR] Netstat failed at %timestamp% >> "%logFile%"
+) else (
+    echo Output saved to %filepath%\%filename%
+)
+pause
+goto MENU
+
+:RENEWIP
+cls
+echo Releasing IP address...
+ipconfig /release 2>>"%logFile%"
+echo Renewing IP address...
+ipconfig /renew 2>>"%logFile%"
+pause
+goto MENU
+
+:CLEARDNS
+cls
+echo Clearing DNS cache...
+ipconfig /flushdns 2>>"%logFile%"
+pause
+goto MENU
+
+:: Network Functions Ends
+
+:: Software Remnants Starts
+
+:UNINSTALL_CITRIX
+cls
+echo Uninstalling Citrix Workspace...
+echo [%timestamp%] Starting Citrix Workspace removal >> "%logFile%"
+:: Kill running Citrix processes
+taskkill /IM "SelfService.exe" /F >> "%logFile%" 2>&1
+if errorlevel 1 echo [%timestamp%] [ERROR] Failed to kill SelfService.exe >> "%logFile%"
+taskkill /IM "CitrixWorkspace.exe" /F >> "%logFile%" 2>&1
+if errorlevel 1 echo [%timestamp%] [ERROR] Failed to kill CitrixWorkspace.exe >> "%logFile%"
+
+:: Remove Citrix folders
+if exist "C:\Program Files\Citrix" (
+    rmdir /S /Q "C:\Program Files\Citrix" >> "%logFile%" 2>&1
+    if errorlevel 1 echo [%timestamp%] [ERROR] Failed to remove C:\Program Files\Citrix >> "%logFile%"
+)
+
+if exist "C:\Program Files (x86)\Citrix" (
+    rmdir /S /Q "C:\Program Files (x86)\Citrix" >> "%logFile%" 2>&1
+    if errorlevel 1 echo [%timestamp%] [ERROR] Failed to remove C:\Program Files (x86)\Citrix >> "%logFile%"
+)
+
+if exist "C:\ProgramData\Citrix" (
+    rmdir /S /Q "C:\ProgramData\Citrix" >> "%logFile%" 2>&1
+    if errorlevel 1 echo [%timestamp%] [ERROR] Failed to remove C:\ProgramData\Citrix >> "%logFile%"
+)
+
+echo [%timestamp%] Citrix Workspace removal completed >> "%logFile%"
+pause
+goto REMNANTSMENU
+
+:: Software Remnants Ends
+
+:: PC Repairs Menu Starts
+
+:SFCSCAN
+cls
+echo Running SFC Scan...
+sfc /scannow 2>>"%logFile%"
+pause
+goto :REPAIRMENU
+
+:WINDOWSREPAIR 
+cls
+echo Running Windows repair...
+DISM /Online /Cleanup-image /restorehealth 2>>"%logFile%"
+pause
+goto :REPAIRMENU
+
+:DISKERROR
+cls
+echo Fixing Disk Errors...
+chkdsk /f  2>>"%logFile%"
+pause
+goto :REPAIRMENU
+
+:: PC Repairs Menu Ends 
+
+:: Loose Options.
+
+:DELETESWD
+cls
+echo Stopping Windows Update services...
+net stop wuauserv 2>>"%logFile%"
+net stop bits 2>>"%logFile%"
+net stop cryptsvc 2>>"%logFile%"
+net stop msiserver 2>>"%logFile%"
+echo Deleting SoftwareDistribution folder contents...
+del /s /q %windir%\SoftwareDistribution\* 2>>"%logFile%"
+echo Starting Windows Update services...
+net start wuauserv 2>>"%logFile%"
+net start bits 2>>"%logFile%"
+net start cryptsvc 2>>"%logFile%"
+net start msiserver 2>>"%logFile%"
+pause
+goto MENU
+
+:BIOSBOOT
+cls
+echo rebooting into bios in 10 seconds 
+shutdown /r /fw /f /t 10
+pause
+goto MENU
+
+:DEFUPDATE
+cls
+echo Triggering Defender signature update...
+"%ProgramFiles%\Windows Defender\MpCmdRun.exe" -SignatureUpdate 2>>"%logFile%"
+pause
+goto MENU
+
+
