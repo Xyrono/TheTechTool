@@ -26,6 +26,7 @@ echo ================================
 echo(
 echo The Tool for all your IT Technican needs! 
 echo( 
+echo 1. PC Information Menu
 echo 1. Network Tool Menu
 echo 2. File Remnants Menu
 echo 3. PC Repair Menu
@@ -54,6 +55,44 @@ goto MENU
 cls
 exit
 :: Main Menu Functions Ends
+
+:PCINFORMATIONMENU
+cls
+echo ================================
+echo        SYSTEM INFORMATION MENU
+echo ================================
+echo(
+echo Select a tool to run:
+echo 1. Ping an IP address or hostname
+echo 2. Internet connectivity Test
+echo 3. Show all networking information (Ethernet and Wi-Fi)
+echo 4. Traceroute to a host
+echo 5. Show active network connections (netstat)
+echo 6. Release and renew IP address
+echo 7. Clear DNS cache
+echo 8. Back to Main Menu
+echo(
+set /p choiceNetwork=Choose an option (1-8):
+
+if "%choiceNetwork%"=="1" goto PING
+if "%choiceNetwork%"=="2" goto EXTERNAL_DNS_CHECKER
+if "%choiceNetwork%"=="3" goto NETINFO
+if "%choiceNetwork%"=="4" goto TRACEROUTE
+if "%choiceNetwork%"=="5" goto NETSTAT
+if "%choiceNetwork%"=="6" goto RENEWIP
+if "%choiceNetwork%"=="7" goto CLEARDNS
+if "%choiceNetwork%"=="8" goto MENU
+goto MENU
+
+
+
+
+
+
+
+
+
+
 :: Network Menu Starts
 
 :NETWORKMENU
@@ -64,22 +103,24 @@ echo ================================
 echo(
 echo Select a tool to run:
 echo 1. Ping an IP address or hostname
-echo 2. Show all networking information (Ethernet and Wi-Fi)
-echo 3. Traceroute to a host
-echo 4. Show active network connections (netstat)
-echo 5. Release and renew IP address
-echo 6. Clear DNS cache
-echo 7. Back to Main Menu
+echo 2. Internet connectivity Test
+echo 3. Show all networking information (Ethernet and Wi-Fi)
+echo 4. Traceroute to a host
+echo 5. Show active network connections (netstat)
+echo 6. Release and renew IP address
+echo 7. Clear DNS cache
+echo 8. Back to Main Menu
 echo(
-set /p choiceNetwork=Choose an option (1-7):
+set /p choiceNetwork=Choose an option (1-8):
 
 if "%choiceNetwork%"=="1" goto PING
-if "%choiceNetwork%"=="2" goto NETINFO
-if "%choiceNetwork%"=="3" goto TRACEROUTE
-if "%choiceNetwork%"=="4" goto NETSTAT
-if "%choiceNetwork%"=="5" goto RENEWIP
-if "%choiceNetwork%"=="6" goto CLEARDNS
-if "%choiceNetwork%"=="7" goto MENU
+if "%choiceNetwork%"=="2" goto EXTERNAL_DNS_CHECKER
+if "%choiceNetwork%"=="3" goto NETINFO
+if "%choiceNetwork%"=="4" goto TRACEROUTE
+if "%choiceNetwork%"=="5" goto NETSTAT
+if "%choiceNetwork%"=="6" goto RENEWIP
+if "%choiceNetwork%"=="7" goto CLEARDNS
+if "%choiceNetwork%"=="8" goto MENU
 goto MENU
 
 :: Network Menu Ends
@@ -151,6 +192,73 @@ goto MENU
 
 :: Main Menu Functions Start
 
+::System Information Functions Start
+
+:SYSINFO
+cls
+systeminfo | findstr /C:"OS Name" /C:"OS Version" /C:"Host Name" /C:"System Type" /C:"Total Physical Memory" /C:"System Boot Time"
+echo   Processors: %NUMBER_OF_PROCESSORS% x %PROCESSOR_IDENTIFIER%
+pause
+goto MENU
+
+:DISKUSAGE
+cls
+wmic logicaldisk where "DriveType=3" get DeviceID,Size,FreeSpace,VolumeName /format:table 2>nul
+pause
+goto MENU
+
+:MEMORYUSAGE
+cls
+systeminfo | findstr /C:"Total Physical Memory" /C:"Available Physical Memory"
+pause
+goto MENU
+
+:CPULOAD
+cls
+wmic cpu get name,loadpercentage /format:table 2>nul
+pause
+goto MENU
+
+:RECENTSYSERRORS
+cls
+wevtutil qe System /q:"*[System[Level=2]]" /c:5 /rd:true /f:text 2>nul | findstr /C:"Date" /C:"Source"
+pause
+goto MENU
+
+:FULLINFO
+cls
+echo  ============================================================ 
+echo                    Full System Information
+echo  ============================================================
+echo.
+echo   [1/5] System Information...
+echo  ============================================================
+systeminfo | findstr /C:"OS Name" /C:"OS Version" /C:"Host Name" /C:"System Type" /C:"Total Physical Memory" /C:"System Boot Time"
+echo   Processors: %NUMBER_OF_PROCESSORS% x %PROCESSOR_IDENTIFIER%
+echo.
+
+echo   [2/5] Disk Usage...
+echo  ============================================================
+wmic logicaldisk where "DriveType=3" get DeviceID,Size,FreeSpace,VolumeName /format:table 2>nul
+echo.
+
+echo   [3/5] Memory...
+echo  ============================================================
+systeminfo | findstr /C:"Total Physical Memory" /C:"Available Physical Memory"
+echo.
+echo   [4/5] CPU Load...
+echo  ============================================================
+wmic cpu get name,loadpercentage /format:table 2>nul
+echo.
+echo   [5/5] Recent System Errors...
+echo  ============================================================
+wevtutil qe System /q:"*[System[Level=2]]" /c:5 /rd:true /f:text 2>nul | findstr /C:"Date" /C:"Source"
+echo.
+echo  ============================================================
+echo   All diagnostics complete.
+echo  ============================================================
+echo.
+goto MENU
 
 :: Network Functions Start
 
@@ -176,6 +284,16 @@ if errorlevel 1 (
 )
 pause
 goto MENU
+
+:EXTERNAL_DNS_CHECKER
+cls
+ping -n 2 8.8.8.8 >nul 2>&1 && echo   [OK]  8.8.8.8 Google DNS - REACHABLE      || echo   [XX]  8.8.8.8 Google DNS - UNREACHABLE
+ping -n 2 1.1.1.1 >nul 2>&1 && echo   [OK]  1.1.1.1 Cloudflare  - REACHABLE      || echo   [XX]  1.1.1.1 Cloudflare  - UNREACHABLE
+ping -n 2 google.com >nul 2>&1 && echo   [OK]  google.com DNS Res - REACHABLE    || echo   [XX]  google.com DNS Res - UNREACHABLE
+pause
+goto MENU
+
+
 
 :NETINFO
 cls
